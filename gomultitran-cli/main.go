@@ -7,7 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"gomultitran/webapi"
+	"bitbucket.org/vladimir_g/gomultitran/webapi"
 	"os"
 	"sort"
 	"strings"
