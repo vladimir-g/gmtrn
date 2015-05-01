@@ -1,6 +1,6 @@
-=================================================
+=========================================================
  gmtrn - Parser and CLI tool for http://www.multitran.ru
-=================================================
+=========================================================
 
 Gmtrn is a parser for http://www.multitran.ru written in Go.
 
@@ -9,7 +9,7 @@ This project contains parser library and simple CLI client.
 Install
 -------
 
-Install Go and set up Go language environment (`official docs_`).
+Install Go and set up Go language environment (`official docs`_).
 
 Install CLI client::
 
@@ -30,7 +30,7 @@ More usage options available in help::
 
  $GOPATH/bin/gmtrn-cli -h
 
-If name of the binary looks too long just add alias to your ~/.bashrc.
+If name of the binary looks too long just add alias for it.
 
 Or use simple wrapper script with freedesktop notifications like
 this::
@@ -45,6 +45,8 @@ this (you can bind this command to some key)::
 
  /path/to/script/gmtw translation string
 
+CLI app can also output results in JSON format.
+
 Library usage
 -------------
 
@@ -52,7 +54,7 @@ Use this code::
 
  result, err := gmtrn.Query("Query string", gmtrn.Languages["english"])
 
-More documentation in `doc.go_`
+More documentation in `doc.go`_
 
 
 Known issues

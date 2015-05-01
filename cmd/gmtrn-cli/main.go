@@ -8,6 +8,7 @@ Command-line interface for http://www.multitran.ru/
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -19,6 +20,7 @@ import (
 )
 
 var lang string
+var format string
 var availableLangs []string
 
 // Set command-line flags
@@ -37,6 +39,8 @@ func init() {
 	defaultLang := "english"
 	flag.StringVar(&lang, "language", defaultLang, usage)
 	flag.StringVar(&lang, "l", defaultLang, "Same as -language")
+	flag.StringVar(&format, "f", "text",
+		"Output format (\"text\" or \"json\"")
 }
 
 // Usage text
@@ -146,5 +150,11 @@ func main() {
 		fmt.Printf("Error: %s\n", err)
 		return
 	}
-	printResult(&result)
+	switch format {
+	case "text":
+		printResult(&result)
+	case "json":
+		enc := json.NewEncoder(os.Stdout)
+		enc.Encode(&result)
+	}
 }
