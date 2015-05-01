@@ -1,44 +1,42 @@
-=======================================================
- Gomultitran - HTTP client for http://www.multitran.ru
-=======================================================
+=================================================
+ gmtrn - Parser and CLI tool for http://www.multitran.ru
+=================================================
 
-Gomultitran is a HTTP client for http://www.multitran.ru
+Gmtrn is a parser for http://www.multitran.ru written in Go.
 
-This project contains two packages:
-
-* webapi/webapi.go - library for HTTP access
-* gomultitran-cli/gomultitran-cli.go - CLI client that uses webapi.go
+This project contains parser library and simple CLI client.
 
 Install
 -------
 
-CLI client::
+Install Go and set up Go language environment (`official docs_`).
 
- go get bitbucket.org/vladimir_g/gomultitran/gomultitran-cli
+Install CLI client::
 
-Previous command should install webapi.go library too, but you also
-can install library without CLI client::
+ go get github.com/vladimir-g/gmtrn/cmd/gmtrn-cli
 
- go get bitbucket.org/vladimir_g/gomultitran/webapi
+Library also can be installed without CLI::
+
+ go get github.com/vladimir-g/gmtrn
 
 CLI usage
 ---------
 
 Simple usage::
 
- $GOPATH/bin/gomultitran-cli translation string
+ $GOPATH/bin/gmtrn-cli translation string
 
-Run this to get more usage options::
+More usage options available in help::
 
- $GOPATH/bin/gomultitran-cli -h
+ $GOPATH/bin/gmtrn-cli -h
 
 If name of the binary looks too long just add alias to your ~/.bashrc.
 
-Or you can create simple wrapper script with freedesktop
-notifications like this::
+Or use simple wrapper script with freedesktop notifications like
+this::
 
  #/bin/sh
- RESULT="$($GOPATH/bin/gomultitran-cli $@ | fold -sw 150)"
+ RESULT="$($GOPATH/bin/gmtrn-cli $@ | fold -sw 150)"
  notify-send -t 0 "<span font_family=\"monospace\">$RESULT</span>"
 
 Change 150 to your preferred width (or remove fold completely), set
@@ -52,10 +50,9 @@ Library usage
 
 Use this code::
 
-	result, err := webapi.Query("Query string", 
-        			    webapi.Languages["english"])
+ result, err := gmtrn.Query("Query string", gmtrn.Languages["english"])
 
-Look for more documentation at *webapi/webapi.go*
+More documentation in `doc.go_`
 
 
 Known issues
@@ -65,7 +62,11 @@ Known issues
   reverse translation works fine. This problem happens because site uses
   wrong guessing algorithm for determining the source language.
 
+* Sometimes parser fails (very rare).
+
 * Only default language for site interface is implemented.
 
 * There is no tests.
 
+.. _official docs: https://golang.org/doc/code.html
+.. _doc.go: doc.go
