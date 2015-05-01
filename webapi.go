@@ -6,7 +6,7 @@ bad practice, but site's markup is very poor-formed and other parsing
 methods are too complex in this case.
 
 Usage:
-	result, err := webapi.Query("Query string", 
+	result, err := webapi.Query("Query string",
 				    webapi.Languages["english"])
 
 Known issues:
@@ -26,7 +26,7 @@ first part (or page without results at all).  Displayed page contains
 corresponding part of the query, one or multiple words as result and
 links to other pages with different parts of query (if exist).
 
-How this library works: 
+How this library works:
 
 Library parses response and extracts links to other pages if they
 exist. Then page content is splitted to words and parsed.  Words and
@@ -40,9 +40,9 @@ Meaning - one line with multiple definitions in specific topic.
 
 MeaningWord - word from Meaning line.
   integer (essence)
-  ^ word   ^ add (additional info) 
+  ^ word   ^ add (additional info)
 
-Word - list of Meanings for word. 
+Word - list of Meanings for word.
   число сущ. // Word.Word, Word.Part (part of speech)
      genet. number; date; figure; numeric; // Meaning
      autom. digit                          // Meaning
@@ -55,10 +55,10 @@ package gmtrn
 
 import (
 	"bytes"
-	"code.google.com/p/go-charset/charset"
-	_ "code.google.com/p/go-charset/data"
 	"errors"
 	"fmt"
+	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/transform"
 	"html"
 	"io"
 	"io/ioutil"
@@ -262,11 +262,9 @@ func getData(url string) (result []Word, links []link, err error) {
 		return
 	}
 	defer resp.Body.Close()
-	r, err := charset.NewReader("windows-1251", io.Reader(resp.Body))
-	if err != nil {
-		return
-	}
-	contentRaw, err := ioutil.ReadAll(r)
+	e := charmap.Windows1251
+	decoder := transform.NewReader(io.Reader(resp.Body), e.NewDecoder())
+	contentRaw, err := ioutil.ReadAll(decoder)
 	if err != nil {
 		return
 	}
@@ -299,12 +297,13 @@ func getQuery(query string, lang int) (result string, err error) {
 			encoded += "&#" + strconv.FormatUint(code, 10) + ";"
 		}
 	}
-	w, err := charset.NewWriter("windows-1251", buf)
-	if err != nil {
-		return
-	}
-	fmt.Fprintf(w, encoded)
-	w.Close()
+
+	// Encode to 1251
+	e := charmap.Windows1251
+	encoder := transform.NewWriter(buf, e.NewEncoder())
+	fmt.Fprintf(encoder, encoded)
+	encoder.Close()
+
 	values := url.Values{}
 	values.Add("l1", strconv.Itoa(lang))
 	values.Add("CL", "1") // Don't know what is it
@@ -316,7 +315,7 @@ func getQuery(query string, lang int) (result string, err error) {
 // Run HTTP query to http://www.multitran.ru and return parsed results
 // or error. Function can return error if translation isn't found or
 // something wrong happens.
-// 
+//
 // lang - integer from Languages map
 func Query(query string, lang int) (result []WordList, err error) {
 	queryUrl, err := getQuery(query, lang)
