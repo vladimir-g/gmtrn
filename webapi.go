@@ -1,5 +1,5 @@
 /*
-Package webapi implements http client library for http://www.multitran.ru/
+Package gmtrn implements http client library for http://www.multitran.ru/
 
 DISCLAIMER: Yes, I know that usage of regexes for html parsing is a
 bad practice, but site's markup is very poor-formed and other parsing
@@ -51,7 +51,7 @@ WordList - part of initial query with corresponding words.
   числа // WordList.Query
     число, ...  // Words
 */
-package webapi
+package gmtrn
 
 import (
 	"bytes"

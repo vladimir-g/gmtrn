@@ -7,7 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"bitbucket.org/vladimir_g/gomultitran/webapi"
+	"github.com/vladimir-g/gmtrn"
 	"os"
 	"sort"
 	"strings"
@@ -20,9 +20,9 @@ var availableLangs []string
 // Set command-line flags
 func init() {
 	// Get languages in alphabetical order
-	availableLangs = make([]string, len(webapi.Languages))
+	availableLangs = make([]string, len(gmtrn.Languages))
 	var i int
-	for k, _ := range webapi.Languages {
+	for k, _ := range gmtrn.Languages {
 		availableLangs[i] = k
 		i++
 	}
@@ -61,7 +61,7 @@ func parseArgs() (query string, err error) {
 }
 
 // Get maximum length of word topic (left column)
-func getMaxTopicLen(wl *[]webapi.WordList) int {
+func getMaxTopicLen(wl *[]gmtrn.WordList) int {
 	var maxLen int
 	var max string
 	for _, wlist := range *wl {
@@ -78,7 +78,7 @@ func getMaxTopicLen(wl *[]webapi.WordList) int {
 }
 
 // Print WordList heading
-func printWordList(wlist *webapi.WordList, maxTopicLen int) {
+func printWordList(wlist *gmtrn.WordList, maxTopicLen int) {
 	length := utf8.RuneCountInString(wlist.Query)
 	fmt.Printf(" %s\n", strings.Repeat("=", length))
 	fmt.Printf(" %s\n", wlist.Query)
@@ -87,7 +87,7 @@ func printWordList(wlist *webapi.WordList, maxTopicLen int) {
 }
 
 // Print WordList contents
-func printWordListContents(wlist *webapi.WordList, maxTopicLen int) {
+func printWordListContents(wlist *gmtrn.WordList, maxTopicLen int) {
 	for _, word := range wlist.Words {
 		partLen := 0
 		if len(word.Part) > 0 {
@@ -102,7 +102,7 @@ func printWordListContents(wlist *webapi.WordList, maxTopicLen int) {
 }
 
 // Print one word
-func printWord(word *webapi.Word, maxTopicLen int) {
+func printWord(word *gmtrn.Word, maxTopicLen int) {
 	for _, m := range word.Meanings {
 		fmt.Printf(" %*s  ", maxTopicLen, m.Abbrev)
 		words := make([]string, 0, len(m.Words))
@@ -119,7 +119,7 @@ func printWord(word *webapi.Word, maxTopicLen int) {
 }
 
 // Print meaning list
-func printResult(result *[]webapi.WordList) {
+func printResult(result *[]gmtrn.WordList) {
 	// Get longest column for pretty printing
 	maxTopicLen := getMaxTopicLen(result)
 	for _, wlist := range *result {
@@ -137,7 +137,7 @@ func main() {
 		usage()
 		return
 	}
-	result, err := webapi.Query(query, webapi.Languages[lang])
+	result, err := gmtrn.Query(query, gmtrn.Languages[lang])
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
 		return
