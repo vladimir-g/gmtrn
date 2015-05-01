@@ -1,3 +1,7 @@
+// Copyright 2012-2015 Vladimir Gorbunov. All rights reserved.  Use of
+// this source code is governed by a MIT license that can be found in
+// the LICENSE file.
+
 /*
 Package gmtrn implements http client library for http://www.multitran.ru/
 
@@ -6,8 +10,8 @@ bad practice, but site's markup is very poor-formed and other parsing
 methods are too complex in this case.
 
 Usage:
-	result, err := webapi.Query("Query string",
-				    webapi.Languages["english"])
+	result, err := gmtrn.Query("Query string",
+			    gmtrn.Languages["english"])
 
 Known issues:
 

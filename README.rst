@@ -68,5 +68,10 @@ Known issues
 
 * There is no tests.
 
+License
+=======
+
+This library released under MIT license, see LICENSE file.
+
 .. _official docs: https://golang.org/doc/code.html
 .. _doc.go: doc.go
