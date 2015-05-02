@@ -32,18 +32,11 @@ More usage options available in help::
 
 If name of the binary looks too long just add alias for it.
 
-Or use simple wrapper script with freedesktop notifications like
-this::
+Example script with xsel and freedesktop notifications::
 
  #/bin/sh
- RESULT="$($GOPATH/bin/gmtrn-cli $@ | fold -sw 150)"
- notify-send -t 0 "<span font_family=\"monospace\">$RESULT</span>"
-
-Change 150 to your preferred width (or remove fold completely), set
-required popup timeout (0 in this example), and run this wrapper like
-this (you can bind this command to some key)::
-
- /path/to/script/gmtw translation string
+ notify-send -t 0 \
+   "<span font='monospace'>$(xsel | xargs -0 gmtrn-cli | fold -sw 100)</span>"
 
 CLI app can also output results in JSON format.
 
