@@ -83,7 +83,7 @@ var linkRe = regexp.MustCompile(`(?s)href="([^"]+)">([^<]+)`)
 var blockRe = regexp.MustCompile("(?s)<table(.*)</table><a name=\"phrases\">")
 
 // Word
-var wordRe = regexp.MustCompile(`^<a href="(.*)">([^<]+)</a>.*( <em>|&nbsp;)?`)
+var wordRe = regexp.MustCompile(`^<a href="([^"]+)">(.+?)</a>.*( <em>|&nbsp;)?`)
 
 // Part of speech (if exists)
 var partRe = regexp.MustCompile(` <em>([^<]+)</em>`)
