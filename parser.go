@@ -88,6 +88,9 @@ var wordRe = regexp.MustCompile(`^<a href="([^"]+)">(.+?)</a>.*( <em>|&nbsp;)?`)
 // Part of speech (if exists)
 var partRe = regexp.MustCompile(` <em>([^<]+)</em>`)
 
+// Regex for "go to start" and "phrases" links that need to be removed
+var removeLinkRe = regexp.MustCompile(`<a href="#(start|phrases)">(.*)</a>`)
+
 // Meaning
 var itemsRe = regexp.MustCompile(
 	`(?s)<a title="(.*?)" href="([^"]+)"><i>(.*?)</i>&nbsp;` +
@@ -146,6 +149,14 @@ func parseWord(chunk string) []Meaning {
 	return result
 }
 
+// Extract full word without additional links and part
+func cleanWord(line string) string {
+	withoutPart := partRe.ReplaceAllString(line, "")
+	withoutLinks := removeLinkRe.ReplaceAllString(withoutPart, "")
+	splitted := strings.Split(stripTags(html.UnescapeString(withoutLinks)), "|")
+	return strings.TrimSpace(splitted[0])
+}
+
 // Parse page content and return word meanings
 func parsePage(content string) (result []Word, err error) {
 	// Get main block with content
@@ -168,7 +179,7 @@ func parsePage(content string) (result []Word, err error) {
 				part = partMatches[1]
 			}
 			word := Word{meanings,
-				stripTags(html.UnescapeString(matches[2])),
+				cleanWord(matches[0]),
 				domain + matches[1],
 				part}
 			result = append(result, word)
