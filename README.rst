@@ -11,13 +11,19 @@ Install
 
 Install Go and set up Go language environment (`official docs`_).
 
-Install CLI client::
+Simple installation of CLI tool::
 
- go get github.com/vladimir-g/gmtrn/cmd/gmtrn-cli
+ git clone https://github.com/vladimir-g/gmtrn/
+ cd gmtrn/cmd/gmtrn-cli
+ go build .
+
+These commands would generate ``gmtrn-cli`` binary.
 
 Library also can be installed without CLI::
 
  go get github.com/vladimir-g/gmtrn
+
+For new versions of golang import statement is enough.
 
 CLI usage
 ---------
@@ -67,5 +73,5 @@ License
 
 This library released under MIT license, see LICENSE file.
 
-.. _official docs: https://golang.org/doc/code.html
+.. _official docs: https://golang.org/doc/install
 .. _doc.go: doc.go
