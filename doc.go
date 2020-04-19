@@ -1,57 +1,74 @@
-// Copyright 2012-2015 Vladimir Gorbunov. All rights reserved.  Use of
+// Copyright 2012-2020 Vladimir Gorbunov. All rights reserved. Use of
 // this source code is governed by a MIT license that can be found in
 // the LICENSE file.
 
 /*
 Package gmtrn implements http client library for http://www.multitran.ru/
 
-DISCLAIMER: Usage of regexes for html parsing is a bad practice, but
-site's markup is very poor-formed and other parsing methods are too
-complex in this case.
 
 Usage:
 	result, err := gmtrn.Query("Query string",
-			    gmtrn.Languages["english"])
+			    gmtrn.Languages["english"], // source language (from)
+                            gmtrn.Languages["russian"]) // target language (to)
+
 
 How multitran works
 
-Site splits incoming query to multiple parts and displays results for
-first part (or page without results at all).  Displayed page contains
-corresponding part of the query, one or multiple words as result and
-links to other pages with different parts of query (if exist).
+Site splits incoming query into multiple parts and displays results
+for first part (or page without results at all).  Displayed page
+contains corresponding part of the query, results as list of words and
+links to other pages with other parts of query (if exist).
 
 How this library works
 
-Library parses response and extracts links to other pages if they
-exist. Then page content is splitted to words and parsed.  Words and
-their definitions form the WordList for current part of query.
+Library makes request to the site and extracts reponse. Depending on
+response, library may do additional requests to get all found word
+definitions.
 
-Description of types and their meaning in site terms
+Every requested page is splitted into Words that have multiple
+Meanings, and combined into WordList. For example, for query
+"translation library" there would be two WordList objects, one for
+"translation", other for "library". First one would contain multiple
+words ("translation" (verb, noun), "translations" etc), and every Word
+would have list of Meanings. Every object also contains a link to
+corresponding page that may be used by library user.
 
-Meaning - one line with multiple definitions in specific topic.
-  eng.    | chain; complex; structure; type; integer (essence);
-  ^ topic   ^ MeaningWord
+Description of types in site terms:
 
-MeaningWord - word from Meaning line.
-  integer (essence)
-  ^ word   ^ add (additional info)
+ Meaning - one line with multiple definitions in specific topic.
+   eng.    | chain; complex; structure; type; integer (essence);
+   ^ topic   ^ MeaningWord
 
-Word - list of Meanings for word.
-  число сущ. // Word.Word, Word.Part (part of speech)
-     genet. number; date; figure; numeric; // Meaning
-     autom. digit                          // Meaning
+ MeaningWord - word from Meaning line.
+   integer (essence)
+   ^ word   ^ add (additional info)
 
-WordList - part of initial query with corresponding words.
-  числа // WordList.Query
-    число, ...  // Words
+ Word - list of Meanings for word.
+   число сущ. // Word.Word, Word.Part (part of speech)
+      genet. number; date; figure; numeric; // Meaning
+      autom. digit                          // Meaning
+
+ WordList - part of initial query with corresponding words.
+   числа // WordList.Query
+     число, ...  // Words
+
+How it looks on site:
+
+ Word
+   topic   meaning, meaning, meaning
+   topic   meaning, meaning, meaning
+   ...
+ Word
+   topic   meaning, meaning, meaning
+   topic   meaning, meaning, meaning
+ ...
 
 Known issues
 
-- There are some problems with translation to Kalmyk language but
-reverse translation works fine. This problem happens because site
-uses wrong guessing algorithm for determining the source language.
+- Site has autodetection algorithm, so sometimes even uses different
+  source/target languages, depending on query. It mostly ok though.
 
-- Only default language for site interface is implemented.
+- Only default site interface language is implemented.
 
 - There is no tests.
 

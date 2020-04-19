@@ -1,4 +1,4 @@
-// Copyright 2012-2020 Vladimir Gorbunov. All rights reserved.  Use of
+// Copyright 2012-2020 Vladimir Gorbunov. All rights reserved. Use of
 // this source code is governed by a MIT license that can be found in
 // the LICENSE file.
 

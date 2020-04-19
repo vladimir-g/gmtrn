@@ -45,7 +45,9 @@ Library usage
 
 Use this code::
 
- result, err := gmtrn.Query("Query string", gmtrn.Languages["english"])
+ result, err := gmtrn.Query("Query string",
+                            gmtrn.Languages["english"],
+                            gmtrn.Languages["russian"])
 
 More documentation in `doc.go`_
 
@@ -53,13 +55,10 @@ More documentation in `doc.go`_
 Known issues
 ------------
 
-* There are some problems with translation to Kalmyk language, but
-  reverse translation works fine. This problem happens because site uses
-  wrong guessing algorithm for determining the source language.
+* Site has autodetection algorithm, so sometimes even uses different
+  source/target languages, depending on query. It mostly ok though.
 
-* Sometimes parser fails (very rare).
-
-* Only default language for site interface is implemented.
+* Only default site interface language is implemented.
 
 * There is no tests.
 
