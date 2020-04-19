@@ -44,7 +44,14 @@ Example script with xsel and freedesktop notifications::
  notify-send -t 0 \
    "<span font='monospace'>$(xsel | xargs -0 gmtrn-cli | fold -sw 100)</span>"
 
-CLI app can also output results in JSON format.
+Another example with zenity::
+
+ #/bin/sh
+
+ xsel | xargs -0 gmtrn-cli | fold -sw 120 | zenity --no-wrap --text-info --width=800 --height=500
+
+CLI app can also output results in JSON format that may be parsed with
+some utility.
 
 Library usage
 -------------
