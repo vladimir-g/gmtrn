@@ -1,20 +1,21 @@
-// Copyright 2012-2015 Vladimir Gorbunov. All rights reserved.  Use of
+// Copyright 2012-2020 Vladimir Gorbunov. All rights reserved.  Use of
 // this source code is governed by a MIT license that can be found in
 // the LICENSE file.
 
 package gmtrn
 
 import (
-	"errors"
 	"fmt"
-	"html"
-	"regexp"
+	"github.com/PuerkitoBio/goquery"
 	"strings"
 )
 
-// Single part of definition, contains word, link to word page and
-// additional information.  Link may not be opened without
-// "http://www.multitran.ru" referer for access.
+// Multitran base domain with search path
+var domain = "https://www.multitran.ru/"
+
+// Single part of definition that contains a single word, link to the
+// word page and additional information. Link often couldn't be opened
+// without "http://www.multitran.ru" referer for access.
 type MeaningWord struct {
 	Word,
 	Link,
@@ -30,13 +31,12 @@ func (w MeaningWord) String() string {
 type Meaning struct {
 	Words []MeaningWord
 	Topic,
-	Link,
-	Abbrev string
+	Link string
 }
 
 func (d Meaning) String() string {
-	return fmt.Sprintf(`<Meaning, Topic: "%s", "%s", "%s" "%s">`,
-		d.Topic, d.Link, d.Abbrev, d.Words)
+	return fmt.Sprintf(`<Meaning, Topic: "%s", "%s", "%s">`,
+		d.Topic, d.Link, d.Words)
 }
 
 // Word with list of meanings
@@ -52,7 +52,7 @@ func (w Word) String() string {
 		w.Word, w.Link, w.Part, w.Meanings)
 }
 
-// List of words for requested page
+// List of words at page
 type WordList struct {
 	Words []Word
 	Query,
@@ -70,120 +70,72 @@ type link struct {
 	link string
 }
 
-// Multitran base domain with search path
-var domain = "http://www.multitran.ru/c/"
-
-/* Regexes */
-// Links to other words
-var otherRe = regexp.MustCompile(
-	`(?s)height="20">&nbsp;(.*)&nbsp;&nbsp;\r\n<br>&nbsp;найдены`)
-var linkRe = regexp.MustCompile(`(?s)href="([^"]+)">([^<]+)`)
-
-// Main content
-var blockRe = regexp.MustCompile("(?s)<table(.*)</table><a name=\"phrases\">")
-
-// Word
-var wordRe = regexp.MustCompile(`^<a href="([^"]+)">(.+?)</a>.*( <em>|&nbsp;)?`)
-
-// Part of speech (if exists)
-var partRe = regexp.MustCompile(` <em>([^<]+)</em>`)
-
-// Regex for "go to start" and "phrases" links that need to be removed
-var removeLinkRe = regexp.MustCompile(`<a href="#(start|phrases)">(.*)</a>`)
-
-// Meaning
-var itemsRe = regexp.MustCompile(
-	`(?s)<a title="(.*?)" href="([^"]+)"><i>(.*?)</i>&nbsp;` +
-		`</a>\r\n</td><td>(.*?)(<span STYLE="color:black"></td>` +
-		`|<td >&nbsp;&nbsp;|</a></td></tr>|<tr>)`)
-
-// MeaningWord
-var mwordRe = regexp.MustCompile(`<a href="([^"]+)">([^<]+)`)
-
-// Additional word info
-var addRe = regexp.MustCompile(`<span STYLE="color:gray">(.*)`)
-
-// Strip tags
-var stripRe = regexp.MustCompile("<(.*?)>")
-
-// Remove tags from string
-func stripTags(str string) string {
-	return stripRe.ReplaceAllString(str, "")
-}
-
-// Remove &nbsp; from string
-func removeNbsp(str string) string {
-	return strings.Replace(str, "&nbsp;", "", -1)
-}
-
-// Get list of word meanings by topic
-func parseWord(chunk string) []Meaning {
-	items := itemsRe.FindAllStringSubmatch(chunk, -1)
-	result := make([]Meaning, 0, len(items))
-	// Process multiple words in meaning
-	for _, item := range items {
-		if len(item) != 6 {
-			continue
-		}
-		cleanStr := html.UnescapeString(removeNbsp(item[4]))
-		words := strings.Split(cleanStr, ";")
-		mwords := make([]MeaningWord, 0, len(words))
-		for _, v := range words {
-			word := mwordRe.FindStringSubmatch(v)
-			if len(word) != 3 {
-				continue
-			}
-			mw := MeaningWord{word[2], domain + word[1], ""}
-			// Get additional information if exist
-			if add := addRe.FindStringSubmatch(v); len(add) == 2 {
-				mw.Add = stripRe.ReplaceAllString(add[1], "")
-			}
-			mwords = append(mwords, mw)
-		}
-		m := Meaning{mwords,
-			html.UnescapeString(item[1]),
-			domain + item[2],
-			removeNbsp(item[3])}
-		result = append(result, m)
-	}
-	return result
-}
-
-// Extract full word without additional links and part
-func cleanWord(line string) string {
-	withoutPart := partRe.ReplaceAllString(line, "")
-	withoutLinks := removeLinkRe.ReplaceAllString(withoutPart, "")
-	splitted := strings.Split(stripTags(html.UnescapeString(withoutLinks)), "|")
-	return strings.TrimSpace(splitted[0])
-}
-
-// Parse page content and return word meanings
-func parsePage(content string) (result []Word, err error) {
-	// Get main block with content
-	block := blockRe.FindStringSubmatch(content)
-	if len(block) != 2 {
-		err = errors.New("Translation can not be found")
+// Parse page content and get links to other pages if exist
+func parseLinks(doc *goquery.Document) (links []link, err error) {
+	form := doc.Find("#translation")
+	if form.Length() == 0 {
 		return
 	}
-	// Split content to chunks with word
-	chunks := strings.Split(block[1],
-		`<td bgcolor="#DBDBDB" colspan="2" width="700">&nbsp;`)
-	result = make([]Word, 0, len(chunks))
-	for _, chunk := range chunks {
-		matches := wordRe.FindStringSubmatch(chunk)
-		if len(matches) == 4 {
-			meanings := parseWord(chunk)
-			part := ""
-			partMatches := partRe.FindStringSubmatch(chunk)
-			if len(partMatches) == 2 {
-				part = partMatches[1]
-			}
-			word := Word{meanings,
-				cleanWord(matches[0]),
-				domain + matches[1],
-				part}
-			result = append(result, word)
+	if goquery.NodeName(form.Next()) == "table" {
+		return
+	}
+	el := form
+	for {
+		el = el.Next()
+		if goquery.NodeName(el) == "br" {
+			break
+		}
+		if goquery.NodeName(el) == "a" {
+			href, _ := el.Attr("href")
+			links = append(links, link{el.Text(), domain + href})
 		}
 	}
+	return
+}
+
+// Parse page content and get WordList (without Word and Link attrs)
+func parsePage(doc *goquery.Document) (list WordList, err error) {
+	table := doc.Find("div.middle_col > table")
+	if table.Length() < 1 {
+		return
+	}
+	word := Word{}
+	table.Find("tr").Each(func(i int, tr *goquery.Selection) {
+		td := tr.Find("td.gray")
+		// New word
+		if td.Length() == 1 {
+			if word.Word != "" {
+				list.Words = append(list.Words, word)
+				word = Word{}
+			}
+			link := td.Find("a:first-child")
+			word.Word = link.Text()
+			href, _ := link.Attr("href")
+			word.Link = domain + href
+			word.Part = td.Find("em").Text()
+		}
+		// Word meaning row
+		subj := tr.Find("td.subj")
+		if subj.Length() == 1 {
+			// mword := Meaning{subj.Text()
+			mwords := make([]MeaningWord, 0)
+			tr.Find("td.trans a").Each(func(i int, w *goquery.Selection) {
+				link, _ := w.Attr("href")
+				link = domain + link
+				wd := w.Text()
+				add := ""
+				if goquery.NodeName(w.Next()) == "span" {
+					add = w.Next().Text()
+				}
+				if goquery.NodeName(w.Prev()) == "span" {
+					add = w.Prev().Text() + " " + add
+				}
+				add = strings.Trim(add, "()")
+				mwords = append(mwords, MeaningWord{wd, link, add})
+			})
+			meaning := Meaning{mwords, subj.Text(), word.Link}
+			word.Meanings = append(word.Meanings, meaning)
+		}
+	})
 	return
 }
