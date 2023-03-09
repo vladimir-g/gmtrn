@@ -1,4 +1,4 @@
-// Copyright 2012-2020 Vladimir Gorbunov. All rights reserved. Use of
+// Copyright 2012-2023 Vladimir Gorbunov. All rights reserved. Use of
 // this source code is governed by a MIT license that can be found in
 // the LICENSE file.
 
@@ -6,8 +6,6 @@ package gmtrn
 
 import (
 	"fmt"
-	"log"
-	"github.com/PuerkitoBio/goquery"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -31,15 +29,12 @@ var Languages = map[string]int{
 }
 
 // Get parsed data and links array from url
-func getData(url string) (result WordList, links []link, err error) {
+func getData(url string, result *WordList, links *[]link) (err error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return
 	}
-
-	// Parser doesn't work with mobile version
-	req.Header.Set("User-Agent", "Mozilla/5.0 Firefox/75.0")
         resp, err := client.Do(req)
 	if err != nil {
 		return
@@ -51,16 +46,12 @@ func getData(url string) (result WordList, links []link, err error) {
 	}
 	defer resp.Body.Close()
 
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	err = parsePage(resp.Body, result, links)
+
 	if err != nil {
 		return
 	}
 
-	links, err = parseLinks(doc)
-	if err != nil {
-		return
-	}
-	result, err = parsePage(doc)
 	return
 }
 
@@ -83,7 +74,9 @@ func getQuery(query string, langFrom int, langTo int) (result string) {
 // langTo - integer from Languages map, target language
 func Query(query string, langFrom int, langTo int) (result []WordList, err error) {
 	queryUrl := getQuery(query, langFrom, langTo)
-	wordList, links, err := getData(queryUrl)
+	wordList := WordList{}
+	links := make([]link, 0)
+	err = getData(queryUrl, &wordList, &links)
 	if err != nil {
 		return
 	}
@@ -95,15 +88,18 @@ func Query(query string, langFrom int, langTo int) (result []WordList, err error
 		wordList.Query = links[0].word
 	}
 	result = append(make([]WordList, 0), wordList)
+
 	if len(links) == 0 {
 		return
 	}
+
 	// Process other pages, starting from second link
 	for i := 1; i < len(links); i++ {
-		wordList, _, oerr := getData(links[i].link)
+		oerr := getData(links[i].link, &wordList, &links)
 		if oerr != nil {
-			log.Print("Error when getting %s: %s\n",
+			fmt.Printf("Error when getting %s: %s\n",
 				links[i], oerr)
+			return
 		} else {
 			wordList.Query = links[i].word
 			wordList.Link = links[i].link

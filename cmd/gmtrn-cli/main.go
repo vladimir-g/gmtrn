@@ -1,4 +1,4 @@
-// Copyright 2012-2015 Vladimir Gorbunov. All rights reserved.  Use of
+// Copyright 2012-2023 Vladimir Gorbunov. All rights reserved.  Use of
 // this source code is governed by a MIT license that can be found in
 // the LICENSE file.
 
@@ -29,7 +29,7 @@ func init() {
 	// Get languages in alphabetical order
 	availableLangs = make([]string, len(gmtrn.Languages))
 	var i int
-	for k, _ := range gmtrn.Languages {
+	for k := range gmtrn.Languages {
 		availableLangs[i] = k
 		i++
 	}
@@ -155,7 +155,10 @@ func main() {
 		usage()
 		return
 	}
-	result, err := gmtrn.Query(query, gmtrn.Languages[langFrom], gmtrn.Languages[langTo])
+
+	result, err := gmtrn.Query(query,
+		gmtrn.Languages[langFrom],
+		gmtrn.Languages[langTo])
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
 		return

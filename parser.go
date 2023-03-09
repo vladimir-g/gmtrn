@@ -1,4 +1,4 @@
-// Copyright 2012-2020 Vladimir Gorbunov. All rights reserved. Use of
+// Copyright 2012-2023 Vladimir Gorbunov. All rights reserved. Use of
 // this source code is governed by a MIT license that can be found in
 // the LICENSE file.
 
@@ -6,7 +6,8 @@ package gmtrn
 
 import (
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/html"
+	"io"
 	"strings"
 )
 
@@ -70,72 +71,178 @@ type link struct {
 	link string
 }
 
-// Parse page content and get links to other pages if exist
-func parseLinks(doc *goquery.Document) (links []link, err error) {
-	form := doc.Find("#translation")
-	if form.Length() == 0 {
-		return
-	}
-	if goquery.NodeName(form.Next()) == "table" {
-		return
-	}
-	el := form
-	for {
-		el = el.Next()
-		if goquery.NodeName(el) == "br" {
-			break
+func isTag(node *html.Node, tagName string) bool {
+	return node.Type == html.ElementNode && node.Data == tagName
+}
+
+// Get node attribute value, returns empty string if not found
+func attrValue(node *html.Node, attrName string) string {
+	for _, attr := range node.Attr {
+		if attr.Key == attrName {
+			return attr.Val
 		}
-		if goquery.NodeName(el) == "a" {
-			href, _ := el.Attr("href")
-			links = append(links, link{el.Text(), domain + href})
+	}
+	return ""
+}
+
+func textContents(node *html.Node) string {
+	var sb strings.Builder
+	var recurse func(n *html.Node)
+	recurse = func(n *html.Node) {
+		if n.Type == html.TextNode {
+			if sb.Len() > 0 {
+				sb.WriteString(" ")
+			}
+			sb.WriteString(n.Data)
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			recurse(c)
+		}
+	}
+	recurse(node)
+	return sb.String()
+}
+
+func parseWord(node *html.Node) (word Word) {
+	// <tr><td class="gray"><a name="PART"></a><a href="LINK">TEXT</a></td></tr>
+	var sb strings.Builder
+	for n := node.FirstChild; n != nil; n = n.NextSibling {
+		if isTag(n, "a") {
+			name := attrValue(n, "name")
+			if name != "" {
+				word.Part = name
+				continue
+			}
+			href := attrValue(n, "href")
+			if href != "" {
+				word.Link = domain + href
+			}
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				if c.Type == html.TextNode {
+					if sb.Len() > 0 {
+						sb.WriteString(" ")
+					}
+					sb.WriteString(c.Data)
+				}
+			}
+		}
+	}
+	word.Word = sb.String()
+	return
+}
+
+func parseMeaningWords(node *html.Node) (mwords []MeaningWord) {
+	// <tr><td class="subj">SUBJ</td><td class="trans">LIST OF WORDS</td></td>
+	var mword MeaningWord
+	for n := node.FirstChild; n != nil; n = n.NextSibling {
+		if n.Type == html.TextNode && n.Data == ";" {
+			// Next word
+			if mword.Word != "" {
+				mwords = append(mwords, mword)
+				mword = MeaningWord{}
+			}
+			continue
+		}
+		if isTag(n, "a") {
+			// Word contents
+			mword.Word = textContents(n)
+			mword.Link = domain + attrValue(n, "href")
+			continue
+		}
+		if isTag(n, "span") {
+			mword.Add = textContents(n)
+			continue
+		}
+	}
+	if mword.Word != "" {
+		mwords = append(mwords, mword)
+	}
+	return
+}
+
+func parseMeaning(node *html.Node) (meaning Meaning) {
+	// <tr><td class="subj">SUBJ</td><td class="trans">LIST OF WORDS</td></td>
+	// var sb strings.Builder
+	for td := node.FirstChild; td != nil; td = td.NextSibling {
+		if !isTag(td, "td") {
+			continue
+		}
+		if attrValue(td, "class") == "subj" {
+			meaning.Topic = textContents(td)
+		} else if attrValue(td, "class") == "trans" {
+			meaning.Words = parseMeaningWords(td)
 		}
 	}
 	return
 }
 
-// Parse page content and get WordList (without Word and Link attrs)
-func parsePage(doc *goquery.Document) (list WordList, err error) {
-	table := doc.Find("div.middle_col > table")
-	if table.Length() < 1 {
+func parseTable(table *html.Node, list *WordList) {
+	var tbody *html.Node
+	for n := table.FirstChild; n != nil; n = n.NextSibling {
+		if isTag(n, "tbody") {
+			tbody = n
+			break
+		}
+	}
+	if tbody == nil {
 		return
 	}
 	word := Word{}
-	table.Find("tr").Each(func(i int, tr *goquery.Selection) {
-		td := tr.Find("td.gray")
-		// New word
-		if td.Length() == 1 {
-			if word.Word != "" {
-				list.Words = append(list.Words, word)
-				word = Word{}
+TR:
+	for tr := tbody.FirstChild; tr != nil; tr = tr.NextSibling {
+		if !isTag(tr, "tr") {
+			continue
+		}
+		// Parse trs
+		for td := tr.FirstChild; td != nil; td = td.NextSibling {
+			if !isTag(td, "td") {
+				continue
 			}
-			link := td.Find("a:first-child")
-			word.Word = link.Text()
-			href, _ := link.Attr("href")
-			word.Link = domain + href
-			word.Part = td.Find("em").Text()
-		}
-		// Word meaning row
-		subj := tr.Find("td.subj")
-		if subj.Length() == 1 {
-			// mword := Meaning{subj.Text()
-			mwords := make([]MeaningWord, 0)
-			tr.Find("td.trans a").Each(func(i int, w *goquery.Selection) {
-				link, _ := w.Attr("href")
-				link = domain + link
-				wd := w.Text()
-				add := ""
-				if goquery.NodeName(w.Next()) == "span" {
-					add = w.Next().Text()
+			if attrValue(td, "class") == "gray" {
+				// New word
+				if word.Word != "" {
+					list.Words = append(list.Words, word)
 				}
-				if goquery.NodeName(w.Prev()) == "span" {
-					add = w.Prev().Text() + " " + add
-				}
-				add = strings.Trim(add, "()")
-				mwords = append(mwords, MeaningWord{wd, link, add})
-			})
-			meaning := Meaning{mwords, subj.Text(), word.Link}
-			word.Meanings = append(word.Meanings, meaning)
+				word = parseWord(td)
+				continue TR
+			} else if attrValue(td, "class") == "subj" {
+				meaning := parseMeaning(tr)
+				word.Meanings = append(word.Meanings, meaning)
+				continue TR
+			}
 		}
-	})
+	}
+	if word.Word != "" {
+		list.Words = append(list.Words, word)
+	}
+}
+
+func parseLink(n *html.Node, links *[]link) {
+	a := n.FirstChild
+	if isTag(a, "a") {
+		*links = append(*links, link{textContents(a), domain + attrValue(a, "href")})
+	}
+}
+
+func walkTree(n *html.Node, list *WordList, links *[]link) {
+	if isTag(n, "table") && attrValue(n, "width") == "100%" {
+		// Check width fixme
+		parseTable(n, list)
+	} else if isTag(n, "span") && attrValue(n, "class") == "tooltip" {
+		parseLink(n, links)
+	} else {
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walkTree(c, list, links)
+		}
+	}
+	return
+}
+
+func parsePage(r io.Reader, list *WordList, links *[]link) (err error) {
+	doc, err := html.Parse(r)
+	if err != nil {
+		return
+	}
+	walkTree(doc, list, links)
 	return
 }
