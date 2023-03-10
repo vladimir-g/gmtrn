@@ -3,7 +3,7 @@
 // the LICENSE file.
 
 /*
-Command-line interface for http://www.multitran.ru/
+   Command-line interface for http://www.multitran.ru/
 */
 package main
 
@@ -127,7 +127,7 @@ func printWordListContents(wlist *gmtrn.WordList, maxTopicLen int) {
 // Print one word
 func printWord(word *gmtrn.Word, maxTopicLen int) {
 	for _, m := range word.Meanings {
-		fmt.Printf(" %*s  ", maxTopicLen, m.Topic)
+		fmt.Printf(" %*s ", maxTopicLen, m.Topic)
 		words := make([]string, 0, len(m.Words))
 		for _, w := range m.Words {
 			// Add space to additional info if needed

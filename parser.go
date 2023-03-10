@@ -30,11 +30,13 @@ func (w MeaningWord) String() string {
 		w.Word, w.Link, w.Add)
 }
 
-// Meaning of some word by topic.
+// Meaning of some word by topic. Optional Title extracted from link
+// tooltip.
 type Meaning struct {
 	Words []MeaningWord
 	Topic,
-	Link string
+	Link,
+	Title string
 }
 
 func (d Meaning) String() string {
@@ -195,6 +197,10 @@ func parseMeaning(node *html.Node) (meaning Meaning) {
 		}
 		if attrValue(td, "class") == "subj" {
 			meaning.Topic = textContents(td)
+			if isTag(td.FirstChild, "a") {
+				meaning.Link = domain + attrValue(td.FirstChild, "href")
+				meaning.Title = attrValue(td.FirstChild, "title")
+			}
 		} else if attrValue(td, "class") == "trans" {
 			meaning.Words = parseMeaningWords(td)
 		}
@@ -247,7 +253,8 @@ TR:
 func parseLink(n *html.Node, links *[]link) {
 	a := n.FirstChild
 	if isTag(a, "a") {
-		*links = append(*links, link{textContents(a), domain + attrValue(a, "href")})
+		*links = append(*links,
+			link{textContents(a), domain + attrValue(a, "href")})
 	}
 }
 
