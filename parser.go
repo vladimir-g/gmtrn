@@ -16,13 +16,19 @@ var domain = "https://www.multitran.com/"
 
 // Single part of definition that contains a single word, link to the
 // word page and additional information. Link often couldn't be opened
-// without [multitran.com] referer for access.
+// without [multitran.com] referer for access. If translation was
+// provided by some user, information is extracted into Translator
+// (username), TranslatorLink (link to profile) and TranslatorTitle
+// (link title, contains date of translation)
 //
 // [multitran.com]: https://www.multitran.com
 type MeaningWord struct {
 	Word,
 	Link,
-	Add string
+	Add,
+	Translator,
+	TranslatorLink,
+	TranslatorTitle string
 }
 
 func (w MeaningWord) String() string {
@@ -158,6 +164,26 @@ func parseWord(node *html.Node) (word Word) {
 	return
 }
 
+// Parse additional part and translation info of MeaningWord
+func parseMeaningWordAdd(span *html.Node, mword *MeaningWord) {
+	add := ""
+	for c := span.FirstChild; c != nil; c = c.NextSibling {
+		if isTag(c, "i") {
+			if isTag(c.FirstChild, "a") {
+				a := c.FirstChild
+				mword.Translator = textContents(a)
+				mword.TranslatorLink = domain + attrValue(a, "href")
+				mword.TranslatorTitle = attrValue(a, "title")
+			} else {
+				add += textContents(c)
+			}
+		} else {
+			add += textContents(c)
+		}
+	}
+	mword.Add = strings.Trim(add, "()")
+}
+
 // Parse list of MeaningWords
 func parseMeaningWords(node *html.Node) (mwords []MeaningWord) {
 	// <tr><td class="subj">SUBJ</td><td class="trans">LIST OF WORDS</td></td>
@@ -178,7 +204,7 @@ func parseMeaningWords(node *html.Node) (mwords []MeaningWord) {
 			continue
 		}
 		if isTag(n, "span") {
-			mword.Add = textContents(n)
+			parseMeaningWordAdd(n, &mword)
 			continue
 		}
 	}

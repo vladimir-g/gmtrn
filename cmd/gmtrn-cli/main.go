@@ -131,11 +131,22 @@ func printWord(word *gmtrn.Word, maxTopicLen int) {
 		words := make([]string, 0, len(m.Words))
 		for _, w := range m.Words {
 			// Add space to additional info if needed
-			if len(w.Add) > 0 && !strings.HasPrefix(w.Add, " ") {
-				w.Add = " " + w.Add
+			suffix := ""
+			if len(w.Add) > 0 || len(w.Translator) > 0 {
+				suffix += " ("
+				if len(w.Add) > 0 {
+					suffix += w.Add
+				}
+				if len(w.Translator) > 0 {
+					if len(w.Add) > 0 {
+						suffix += " "
+					}
+					suffix += w.Translator
+				}
+				suffix += ")"
 			}
 			words = append(words,
-				fmt.Sprintf("%s%s", w.Word, w.Add))
+				fmt.Sprintf("%s%s", w.Word, suffix))
 		}
 		fmt.Printf("%s\n", strings.Join(words, ", "))
 	}
