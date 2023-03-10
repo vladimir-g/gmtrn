@@ -3,7 +3,7 @@
 // the LICENSE file.
 
 /*
-Package gmtrn implements http client library for http://www.multitran.com/
+Package gmtrn implements http client library for [multitran.com]
 
 Usage:
 
@@ -12,7 +12,7 @@ Usage:
                        gmtrn.Languages["russian"]) // target language (to)
 
 # How multitran works
-
+   
    Requested query is splitted into multiple parts depending on found
    translations. Results page contains corresponding part of the
    query, list of words and links to other pages with other parts of
@@ -30,9 +30,11 @@ Usage:
    Every requested page is splitted into Words that have multiple
    Meanings, and combined into WordList. For example, for query
    "translation library" there would be two WordList objects, one for
-   "translation", other for "library". First one would contain multiple
-   words ("translation" (verb, noun), "translations" etc), and every Word
-   would have list of Meanings. Every object also contains a link to
+   "translation", other for "library". First one would contain
+   multiple words ("translation" (verb, noun), "translations" etc),
+   and every Word would have list of Meanings. Word also may contain
+   optional pre- and post-parts that provide some context, and also
+   optional phonetic spelling. Every object also contains a link to
    corresponding page that may be used by library user.
 
    Description of types in site terms:
@@ -46,7 +48,7 @@ Usage:
 	  ^ word   ^ add (additional info)
 
 	Word - list of Meanings for word.
-	  число сущ. // Word.Word, Word.Part (part of speech)
+	  общее число [...] π сущ. // Word.Pre, Word.Word, Word.Post, Word.Spelling, Word.Part (part of speech)
 	     genet. number; date; figure; numeric; // Meaning
 	     autom. digit                          // Meaning
 
@@ -75,5 +77,8 @@ Usage:
   - Thesaurus is parsed as simple translation table.
 
   - There is no tests.
+
+[multitran.com]: https://www.multitran.com/
+
 */
 package gmtrn

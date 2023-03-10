@@ -88,13 +88,15 @@ func getQuery(query string, langFrom int, langTo int) (result string) {
 	return
 }
 
-// Run HTTP query to http://www.multitran.com and return parsed
+// Run HTTP query to [multitran.com] and return parsed
 // results or error. Function may return error if translation isn't
 // found or something wrong happens.
 //
-// query - query string
-// langFrom - integer from Languages map, source language
-// langTo - integer from Languages map, target language
+//  * query - query string
+//  * langFrom - integer from Languages map, source language
+//  * langTo - integer from Languages map, target language
+//
+// [multitran.com]: https://www.multitran.com
 func Query(query string, langFrom int, langTo int) (result []WordList, err error) {
 	queryUrl := getQuery(query, langFrom, langTo)
 	wordList := WordList{}

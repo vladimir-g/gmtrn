@@ -108,13 +108,18 @@ func printWordList(wlist *gmtrn.WordList, maxTopicLen int) {
 // Print WordList contents
 func printWordListContents(wlist *gmtrn.WordList, maxTopicLen int) {
 	for _, word := range wlist.Words {
-		partLen := 0
-		if len(word.Part) > 0 {
-			partLen += utf8.RuneCountInString(word.Part) + 1
+		length := 0
+		parts := [...]string{word.Pre, word.Post, word.Word,
+			word.Spelling, word.Part}
+		line := " "
+		for _, part := range parts {
+			if len(part) > 0 {
+				length += utf8.RuneCountInString(part) + 1
+				line += part + " "
+			}
 		}
-		length := utf8.RuneCountInString(word.Word) + partLen
-		fmt.Printf(" %s %s\n", word.Word, word.Part)
-		fmt.Printf(" %s\n", strings.Repeat("-", length))
+		fmt.Printf(" %s\n", line)
+		fmt.Printf(" %s\n", strings.Repeat("-", length + 1))
 		printWord(&word, maxTopicLen)
 	}
 }

@@ -16,7 +16,9 @@ var domain = "https://www.multitran.com/"
 
 // Single part of definition that contains a single word, link to the
 // word page and additional information. Link often couldn't be opened
-// without "http://www.multitran.ru" referer for access.
+// without [multitran.com] referer for access.
+//
+// [multitran.com]: https://www.multitran.com
 type MeaningWord struct {
 	Word,
 	Link,
@@ -40,11 +42,17 @@ func (d Meaning) String() string {
 		d.Topic, d.Link, d.Words)
 }
 
-// Word with list of meanings
+// Word with list of meanings. Pre, Post and Spelling are optional
+// parts. Pre is displayed before and Post after the word to provide
+// translation context. Spelling is written in phonetic alphabet. Part
+// describes part of speech.
 type Word struct {
 	Meanings []Meaning
 	Word,
 	Link,
+	Pre,
+	Post,
+	Spelling,
 	Part string
 }
 
@@ -132,6 +140,15 @@ func parseWord(node *html.Node) (word Word) {
 					}
 					sb.WriteString(c.Data)
 				}
+			}
+		} else if isTag(n, "span") {
+			text := textContents(n)
+			if strings.HasPrefix(text, "[") && strings.HasSuffix(text, "]") {
+				word.Spelling = text
+			} else if sb.Len() > 0 {
+				word.Post = text
+			} else {
+				word.Pre =  text
 			}
 		}
 	}
