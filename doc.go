@@ -3,74 +3,77 @@
 // the LICENSE file.
 
 /*
-Package gmtrn implements http client library for http://www.multitran.ru/
-
+Package gmtrn implements http client library for http://www.multitran.com/
 
 Usage:
-	result, err := gmtrn.Query("Query string",
-			    gmtrn.Languages["english"], // source language (from)
-                            gmtrn.Languages["russian"]) // target language (to)
 
+   result, err := gmtrn.Query("Query string",
+		       gmtrn.Languages["english"], // source language (from)
+                       gmtrn.Languages["russian"]) // target language (to)
 
-How multitran works
+# How multitran works
 
-Site splits incoming query into multiple parts and displays results
-for first part (or page without results at all).  Displayed page
-contains corresponding part of the query, results as list of words and
-links to other pages with other parts of query (if exist).
+   Requested query is splitted into multiple parts depending on found
+   translations. Results page contains corresponding part of the
+   query, list of words and links to other pages with other parts of
+   query (if exist).
 
-How this library works
+   For example, query "first second third" may be splitted by
+   multitran to pages with "first second" and "third".
 
-Library makes request to the site and extracts reponse. Depending on
-response, library may do additional requests to get all found word
-definitions.
+# How this library works
 
-Every requested page is splitted into Words that have multiple
-Meanings, and combined into WordList. For example, for query
-"translation library" there would be two WordList objects, one for
-"translation", other for "library". First one would contain multiple
-words ("translation" (verb, noun), "translations" etc), and every Word
-would have list of Meanings. Every object also contains a link to
-corresponding page that may be used by library user.
+   Library makes request to the site and extracts first page. If this
+   page contains links to other pages with separate word translations,
+   they are requested next.
 
-Description of types in site terms:
+   Every requested page is splitted into Words that have multiple
+   Meanings, and combined into WordList. For example, for query
+   "translation library" there would be two WordList objects, one for
+   "translation", other for "library". First one would contain multiple
+   words ("translation" (verb, noun), "translations" etc), and every Word
+   would have list of Meanings. Every object also contains a link to
+   corresponding page that may be used by library user.
 
- Meaning - one line with multiple definitions in specific topic.
-   eng.    | chain; complex; structure; type; integer (essence);
-   ^ topic   ^ MeaningWord
+   Description of types in site terms:
 
- MeaningWord - word from Meaning line.
-   integer (essence)
-   ^ word   ^ add (additional info)
+	Meaning - one line with multiple definitions in specific topic.
+	  eng.    | chain; complex; structure; type; integer (essence);
+	  ^ topic   ^ MeaningWord
 
- Word - list of Meanings for word.
-   число сущ. // Word.Word, Word.Part (part of speech)
-      genet. number; date; figure; numeric; // Meaning
-      autom. digit                          // Meaning
+	MeaningWord - word from Meaning line.
+	  integer (essence)
+	  ^ word   ^ add (additional info)
 
- WordList - part of initial query with corresponding words.
-   числа // WordList.Query
-     число, ...  // Words
+	Word - list of Meanings for word.
+	  число сущ. // Word.Word, Word.Part (part of speech)
+	     genet. number; date; figure; numeric; // Meaning
+	     autom. digit                          // Meaning
 
-How it looks on site:
+	WordList - part of initial query with corresponding words.
+	  числа // WordList.Query
+	    число, ...  // Words
 
- Word
-   topic   meaning, meaning, meaning
-   topic   meaning, meaning, meaning
-   ...
- Word
-   topic   meaning, meaning, meaning
-   topic   meaning, meaning, meaning
- ...
+   How it looks on site:
 
-Known issues
+	Word
+	  topic   meaning, meaning, meaning
+	  topic   meaning, meaning, meaning
+	  ...
+	Word
+	  topic   meaning, meaning, meaning
+	  topic   meaning, meaning, meaning
+	...
 
-- Site has autodetection algorithm, so sometimes even uses different
-  source/target languages, depending on query. It mostly ok though.
+# Known issues
 
-- Only default site interface language is implemented.
+  - Site has autodetection algorithm, so sometimes even uses different
+    source/target languages, depending on query. It mostly ok though.
 
-- There is no tests.
+  - Only default site interface language is implemented.
 
+  - Thesaurus is parsed as simple translation table.
+
+  - There is no tests.
 */
 package gmtrn

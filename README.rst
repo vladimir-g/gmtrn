@@ -1,8 +1,8 @@
-=========================================================
- gmtrn - Parser and CLI tool for http://www.multitran.ru
-=========================================================
+==========================================================
+ gmtrn - Parser and CLI tool for http://www.multitran.com
+==========================================================
 
-Gmtrn is a parser for http://www.multitran.ru written in Go.
+Gmtrn is a parser for http://www.multitran.com written in Go.
 
 This project contains parser library and simple CLI client.
 

@@ -13,19 +13,42 @@ import (
 
 // Available languages
 var Languages = map[string]int{
-	"english":   1,
-	"russian":   2,
-	"german":    3,
-	"french":    4,
-	"spanish":   5,
-	"italian":   23,
-	"dutch":     24,
-	"latvian":   27,
-	"estonian":  26,
-	"japanese":  28,
-	"afrikaans": 31,
-	"esperanto": 34,
-	"kalmyk":    35,
+	"english":    1,
+	"russian":    2,
+	"german":     3,
+	"french":     4,
+	"spanish":    5,
+	"croatian":   8,
+	"arabic":     10,
+	"portuguese": 11,
+	"lithuanian": 12,
+	"romanian":   13,
+	"polish":     14,
+	"bulgarian":  15,
+	"czech":      16,
+	"chinese":    17,
+	"danish":     22,
+	"italian":    23,
+	"dutch":      24,
+	"latvian":    27,
+	"estonian":   26,
+	"japanese":   28,
+	"swedish":    29,
+	"norwegian":  30,
+	"afrikaans":  31,
+	"turkish":    32,
+	"ukrainian":  33,
+	"esperanto":  34,
+	"kalmyk":     35,
+	"finnish":    36,
+	"latin":      37,
+	"greek":      38,
+	"korean":     39,
+	"hungarian":  42,
+	"irish":      49,
+	"slovak":     60,
+	"slovene":    67,
+	"maltese":    78,
 }
 
 // Get parsed data and links array from url
@@ -35,7 +58,7 @@ func getData(url string, result *WordList, links *[]link) (err error) {
 	if err != nil {
 		return
 	}
-        resp, err := client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return
 	}
@@ -65,9 +88,9 @@ func getQuery(query string, langFrom int, langTo int) (result string) {
 	return
 }
 
-// Run HTTP query to http://www.multitran.ru and return parsed results
-// or error. Function could return error if translation isn't found or
-// something wrong happens.
+// Run HTTP query to http://www.multitran.com and return parsed
+// results or error. Function may return error if translation isn't
+// found or something wrong happens.
 //
 // query - query string
 // langFrom - integer from Languages map, source language

@@ -12,7 +12,7 @@ import (
 )
 
 // Multitran base domain with search path
-var domain = "https://www.multitran.ru/"
+var domain = "https://www.multitran.com/"
 
 // Single part of definition that contains a single word, link to the
 // word page and additional information. Link often couldn't be opened
@@ -71,6 +71,7 @@ type link struct {
 	link string
 }
 
+// Check if node is specific tag
 func isTag(node *html.Node, tagName string) bool {
 	return node.Type == html.ElementNode && node.Data == tagName
 }
@@ -85,6 +86,7 @@ func attrValue(node *html.Node, attrName string) string {
 	return ""
 }
 
+// Get text contents of node and all siblings
 func textContents(node *html.Node) string {
 	var sb strings.Builder
 	var recurse func(n *html.Node)
@@ -103,6 +105,7 @@ func textContents(node *html.Node) string {
 	return sb.String()
 }
 
+// Parse single Word
 func parseWord(node *html.Node) (word Word) {
 	// <tr><td class="gray"><a name="PART"></a><a href="LINK">TEXT</a></td></tr>
 	var sb strings.Builder
@@ -131,6 +134,7 @@ func parseWord(node *html.Node) (word Word) {
 	return
 }
 
+// Parse list of MeaningWords
 func parseMeaningWords(node *html.Node) (mwords []MeaningWord) {
 	// <tr><td class="subj">SUBJ</td><td class="trans">LIST OF WORDS</td></td>
 	var mword MeaningWord
@@ -160,9 +164,9 @@ func parseMeaningWords(node *html.Node) (mwords []MeaningWord) {
 	return
 }
 
+// Parse single Meaning
 func parseMeaning(node *html.Node) (meaning Meaning) {
 	// <tr><td class="subj">SUBJ</td><td class="trans">LIST OF WORDS</td></td>
-	// var sb strings.Builder
 	for td := node.FirstChild; td != nil; td = td.NextSibling {
 		if !isTag(td, "td") {
 			continue
@@ -176,6 +180,7 @@ func parseMeaning(node *html.Node) (meaning Meaning) {
 	return
 }
 
+// Parse table with words
 func parseTable(table *html.Node, list *WordList) {
 	var tbody *html.Node
 	for n := table.FirstChild; n != nil; n = n.NextSibling {
@@ -217,6 +222,7 @@ TR:
 	}
 }
 
+// Get links to other pages of query if exist
 func parseLink(n *html.Node, links *[]link) {
 	a := n.FirstChild
 	if isTag(a, "a") {
@@ -224,6 +230,7 @@ func parseLink(n *html.Node, links *[]link) {
 	}
 }
 
+// Recursively walk over html nodes tree and parse contents
 func walkTree(n *html.Node, list *WordList, links *[]link) {
 	if isTag(n, "table") && attrValue(n, "width") == "100%" {
 		// Check width fixme
@@ -238,6 +245,7 @@ func walkTree(n *html.Node, list *WordList, links *[]link) {
 	return
 }
 
+// Parse site page
 func parsePage(r io.Reader, list *WordList, links *[]link) (err error) {
 	doc, err := html.Parse(r)
 	if err != nil {
