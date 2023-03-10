@@ -53,6 +53,10 @@ func (w Word) String() string {
 		w.Word, w.Link, w.Part, w.Meanings)
 }
 
+func (w *Word) AddMeaning(meaning Meaning) {
+	w.Meanings = append(w.Meanings, meaning)
+}
+
 // List of words at page
 type WordList struct {
 	Words []Word
@@ -63,6 +67,10 @@ type WordList struct {
 func (w WordList) String() string {
 	return fmt.Sprintf(`<WordList "%s", "%s": "%s">`,
 		w.Query, w.Link, w.Words)
+}
+
+func (w *WordList) AddWord(word Word) {
+	w.Words = append(w.Words, word)
 }
 
 // Link to page
@@ -92,9 +100,6 @@ func textContents(node *html.Node) string {
 	var recurse func(n *html.Node)
 	recurse = func(n *html.Node) {
 		if n.Type == html.TextNode {
-			if sb.Len() > 0 {
-				sb.WriteString(" ")
-			}
 			sb.WriteString(n.Data)
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -206,19 +211,18 @@ TR:
 			if attrValue(td, "class") == "gray" {
 				// New word
 				if word.Word != "" {
-					list.Words = append(list.Words, word)
+					list.AddWord(word)
 				}
 				word = parseWord(td)
 				continue TR
 			} else if attrValue(td, "class") == "subj" {
-				meaning := parseMeaning(tr)
-				word.Meanings = append(word.Meanings, meaning)
+				word.AddMeaning(parseMeaning(tr))
 				continue TR
 			}
 		}
 	}
 	if word.Word != "" {
-		list.Words = append(list.Words, word)
+		list.AddWord(word)
 	}
 }
 

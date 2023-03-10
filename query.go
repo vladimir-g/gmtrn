@@ -118,6 +118,7 @@ func Query(query string, langFrom int, langTo int) (result []WordList, err error
 
 	// Process other pages, starting from second link
 	for i := 1; i < len(links); i++ {
+		wordList = WordList{}
 		oerr := getData(links[i].link, &wordList, &links)
 		if oerr != nil {
 			fmt.Printf("Error when getting %s: %s\n",
