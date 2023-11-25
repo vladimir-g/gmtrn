@@ -97,7 +97,7 @@ type link struct {
 
 // Check if node is specific tag
 func isTag(node *html.Node, tagName string) bool {
-	return node.Type == html.ElementNode && node.Data == tagName
+	return node != nil && node.Type == html.ElementNode && node.Data == tagName
 }
 
 // Get node attribute value, returns empty string if not found
@@ -156,7 +156,7 @@ func parseWord(node *html.Node) (word Word) {
 			} else if sb.Len() > 0 {
 				word.Post = text
 			} else {
-				word.Pre =  text
+				word.Pre = text
 			}
 		}
 	}
@@ -257,12 +257,16 @@ TR:
 			if !isTag(td, "td") {
 				continue
 			}
-			if attrValue(td, "class") == "gray" {
-				// New word
-				if word.Word != "" {
-					list.AddWord(word)
+			child := td.FirstChild
+			if isTag(child, "div") && attrValue(child, "class") == "orig11" {
+				wrap := child.FirstChild
+				if isTag(wrap, "div") && attrValue(wrap, "class") == "origl" {
+					// New word
+					if word.Word != "" {
+						list.AddWord(word)
+					}
+					word = parseWord(wrap)
 				}
-				word = parseWord(td)
 				continue TR
 			} else if attrValue(td, "class") == "subj" {
 				word.AddMeaning(parseMeaning(tr))
